@@ -11,12 +11,9 @@ type Time = {
 const Clock = () => {
   const [time, setTime] = useState(new Date().getTime())
   const [running, setRunning] = useState(true)
-  const [future,setFuture] = useState(false)
-  // const [time, setTime] = useState<Time>({
-  //   hours:  date.getHours(),
-  //   minutes: date.getMinutes(),
-  //   seconds: date.getSeconds()
-  // })
+  const [future, setFuture] = useState(false)
+  const intervalIds = useRef<NodeJS.Timeout[]>([])
+  
   const [clock, setClock] = useState<Time>({hours: 0, minutes: 0, seconds: 0})
 
   useEffect(() => {
@@ -49,38 +46,33 @@ const Clock = () => {
     console.log(running)
   }, [running])
 
-  // const timeTravel = async () => {
-  //   let travel = new Promise((resolve, reject) => {
-  //     while(future){
-  //       setInterval(() => {
-  //         setTime((curr) => curr + 1000)
-          
-  //       }, 50)
-        
-  //       resolve("Time Travel finished!")
-  //     }
-  //   });
-
-  //   travel.then((result) => console.log(result))
-
-
-  // }
-
   const timeTravel = async () => {
-    const travel = () => {
-      if (future) {
-        setTime((curr) => curr + 1000);
-        setTimeout(travel, 50);
-      } else {
-        return "Time Travel finished!";
-      }
-    };
-    
-    
+    const intervalId = setInterval(() => {
+      setTime(curr => curr + 1000)
+    }, 50)
 
-    setFuture(true);
-    travel();
+    intervalIds.current.push(intervalId)
   };
+
+
+  const cancelTimeTravel = () => {
+    for(let id of intervalIds.current){
+      clearInterval(id);
+    }
+  }
+
+  const handleClock = (e : any) => {
+    const input = e.target.value.match(/\d+/g)
+    console.log(input)
+  }
+
+  const getFormat = () => {
+    const hours = clock.hours.toString().padStart(2, '0');
+    const minutes = clock.minutes.toString().padStart(2, '0');
+    const seconds = clock.seconds.toString().padStart(2, '0')
+
+    return `${hours}:${minutes}:${seconds}`;      
+  }
 
 
   return (
@@ -127,7 +119,7 @@ const Clock = () => {
         ))}
 
         </div>
-        <div className="relative flex flex-col">
+        <div className="relative flex flex-col items-center">
           <button
           className="m-2 border-2 bg-slate-300 rounded z-50"
           type="button"
@@ -148,16 +140,33 @@ const Clock = () => {
           className="m-2 border-2 bg-slate-300 rounded z-50"
           type="button"
           onClick={() => {
-            setFuture((state) => !state)
             timeTravel()
-            }
-           
-          }
+            setFuture(true)
+          }}
           
           >
             INTO THE FUTURE!!
           </button>
 
+          {
+            future &&
+            <button
+            className="m-2 border-2 bg-red-600 rounded z-50"
+            type="button"
+            onClick={() => { 
+              cancelTimeTravel()
+              setFuture(false)
+            }
+            
+            }
+            
+            >
+              SLOW DOWN!!
+            </button>
+
+          }
+
+          <input onBlur={handleClock} value={getFormat()} />
         </div>
       </div>
 
